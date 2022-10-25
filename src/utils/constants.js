@@ -6,6 +6,7 @@ export const CARD = {
     width: width * 0.9,
     height: height * 0.78,
     borderRadius: 20,
+    out_of_screen: width + 0.5 * width,
 }
 export const COLORS = {
     like: '#6ee3b4',

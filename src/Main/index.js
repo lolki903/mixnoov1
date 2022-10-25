@@ -1,34 +1,67 @@
 import { View, Text, Animated, PanResponder } from 'react-native'
-import React, { useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useState } from 'react'
-import { people } from './data'
+import { people  } from './data'
 import Card from '../Card'
 import { styles } from './styles'
 import Footer from '../Footer'
+import { ACTION_OFFSET, CARD } from '../utils/constants'
 
 export default function Main (){
     
     const [peoples, setPeoples] = useState(people)
-    const expanded = true;
-    const swipe = useRef(new Animated.ValueXY()).current
+    const swipe = React.useRef(new Animated.ValueXY()).current
+    const tiltSign = React.useRef(new Animated.Value(1)).current
+
+    useEffect(() => {
+        if (!peoples.length) {
+            setPeoples(people)
+        }
+    }, [peoples.length])
+
+
     const panResponder = PanResponder.create ({
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderMove: (_, {dx,dY}) => {
-            swipe.setValue({x:dx,y:dY})
+        onPanResponderMove: (_, {dx, dy , y0}) => {
+            swipe.setValue({x:dx,y:dy})
+            tiltSign.setValue(y0 > CARD.height / 2 ? 1 : -1)
         },
-        onPanResponderRelease: (_, gesture) => {
-            Animated.spring(swipe, {
-                toValue: {
-                    x:0,
-                    y:0
-                },
-                useNativeDriver: true,
-                friction: 4,
+        onPanResponderRelease: (_, {dx,dy}) => {
 
-        })
-        .start()
+            const direction = Math.sign(dx)
+            const velocity = Math.abs(dx) > ACTION_OFFSET
+            if (velocity) {
+                Animated.timing(swipe, {
+                    duration:200,
+                    toValue: {x: direction * CARD.out_of_screen, y: dy},
+                    useNativeDriver: true,
+
+                }).start(removeTopCard)
+            }else{
+                Animated.spring(swipe, {
+                    toValue: {x:0,y:0},
+                    useNativeDriver: true,
+                    friction: 5,
+                }).start()
+            }
     }
     })
+    const removeTopCard = useCallback( () => {
+        setPeoples((prevState) => prevState.slice(1))
+        swipe.setValue({x:0,y:0})
+    },[swipe])
+
+    const handleChoice =useCallback((direction) => {
+        Animated.timing(swipe.x, {
+            duration:400,
+            toValue: {
+                x: direction * CARD.out_of_screen, 
+                y: 0
+            },
+            useNativeDriver: true,
+
+        }.start(removeTopCard))
+    },[removeTopCard,swipe.x])
   return (
     <View style={styles.container}>
       {peoples.map(({name,source,email},index) => {
@@ -36,9 +69,9 @@ export default function Main (){
 
         const dragHandlers = isFirst ? panResponder.panHandlers : {}
 
-        return <Card key={name} name={name} source={source} email={email} isFirst={isFirst} {...dragHandlers} swipe={swipe}/>
+        return <Card key={name} name={name} source={source} email={email} isFirst={isFirst} {...dragHandlers} swipe={swipe} tiltSign={tiltSign}/>
         }).reverse()}
-        <Footer />
+        <Footer  handleChoice={handleChoice} />
     </View>
     )
 }
