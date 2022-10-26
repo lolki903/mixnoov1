@@ -1,13 +1,21 @@
-import { View, Text, Animated, PanResponder } from 'react-native'
-import React, { useCallback, useEffect, useRef } from 'react'
-import { useState } from 'react'
+import { View, Text, Animated, PanResponder,TouchableOpacity } from 'react-native'
+import React, {
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useCallback,useRef
+  } from 'react';
+// import React, { useCallback, useEffect, useRef } from 'react'
+
 import { people  } from './data'
 import Card from '../Card'
 import { styles } from './styles'
 import Footer from '../Footer'
 import { ACTION_OFFSET, CARD } from '../utils/constants'
+import { signOut } from 'firebase/auth';
+import { auth, database } from '../../config';
 
-export default function Main (){
+export default function Main ({navigation}){
     
     const [peoples, setPeoples] = useState(people)
     const swipe = React.useRef(new Animated.ValueXY()).current
@@ -62,6 +70,25 @@ export default function Main (){
 
         }.start(removeTopCard))
     },[removeTopCard,swipe.x])
+    
+    const onSignOut = () => {
+        signOut(auth).catch(error => console.log('Error logging out: ', error));
+      };
+    
+      useLayoutEffect(() => {
+        navigation.setOptions({
+          headerRight: () => (
+            <TouchableOpacity
+              style={{
+                marginRight: 10
+              }}
+              onPress={onSignOut}
+            >
+              <Text>Logout</Text>
+            </TouchableOpacity>
+          )
+        });
+      }, [navigation])
   return (
     <View style={styles.container}>
       {peoples.map(({name,source,email},index) => {
@@ -75,4 +102,4 @@ export default function Main (){
     </View>
     )
 }
- 
+ //cree un formulaire pour conaitre les informations de l'utilisateur
