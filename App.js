@@ -22,7 +22,6 @@ import Login from './src/screens/Login';
 import Signup from './src/screens/Signup';
 import Chat from './src/screens/Chat';
 import Main from './src/Main';
-import Chatprivate from './src/screens/Chatprivate';
 
 const Stack = createStackNavigator();
 
